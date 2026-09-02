@@ -1,131 +1,123 @@
+' Student Result Portal - VBScript
+' Technology: VBScript + WSH
+
 Option Explicit
 
-Dim reg, dob
-Dim hasLow, hasHigh
-Dim i, total
-Dim tamil, english, maths, science, social
-Dim result
+Dim regNo, dob, name
+Dim marks(5), subjects(5)
+Dim i, total, average, result, grade, status
+Dim isValid, marksInput
 
-'Get Register Number
-reg = InputBox("Enter Register Number:", "Student Result Portal")
+subjects(0) = "Tamil"
+subjects(1) = "English"
+subjects(2) = "Mathematics"
+subjects(3) = "Science"
+subjects(4) = "Social Science"
 
-If reg = "" Then
-    MsgBox "Register Number is required!", vbExclamation, "Error"
-    WScript.Quit
-End If
-
-'Get Date of Birth
-dob = InputBox("Enter Date of Birth (DD-MM-YYYY):", "Student Result Portal")
-
-If dob = "" Then
-    MsgBox "Date of Birth is required!", vbExclamation, "Error"
-    WScript.Quit
-End If
-
-
-'----------------------------------------
-' Calculate Total Based on Register Number
-'----------------------------------------
-
-hasLow = False
-hasHigh = False
-
-For i = 1 To Len(reg)
-
-    If IsNumeric(Mid(reg, i, 1)) Then
-
-        'Digits 0 to 4
-        If CInt(Mid(reg, i, 1)) >= 0 And _
-           CInt(Mid(reg, i, 1)) <= 4 Then
-            hasLow = True
-        End If
-
-        'Digits 5 to 9
-        If CInt(Mid(reg, i, 1)) >= 5 And _
-           CInt(Mid(reg, i, 1)) <= 9 Then
-            hasHigh = True
-        End If
-
+' 1. Register Number Input & Validation
+Do
+    regNo = InputBox("Enter Register Number (Ex: 123456):" & vbCrLf & vbCrLf & "Must be 6 digits", "Student Result Portal - Step 1/3")
+    If regNo = "" Then WScript.Quit ' User cancelled
+    
+    isValid = True
+    If Len(regNo) <> 6 Then
+        isValid = False
+    Else
+        For i = 1 To Len(regNo)
+            If Not IsNumeric(Mid(regNo, i, 1)) Then
+                isValid = False
+                Exit For
+            End If
+        Next
     End If
 
+    If Not isValid Then
+        MsgBox "Invalid Register Number!" & vbCrLf & "Please enter exactly 6 digits.", vbExclamation, "Validation Error"
+    End If
+Loop While Not isValid
+
+' 2. Date of Birth Input
+Do
+    dob = InputBox("Enter Date of Birth (DD-MM-YYYY):" & vbCrLf & vbCrLf & "Ex: 15-08-2008", "Student Result Portal - Step 2/3")
+    If dob = "" Then WScript.Quit
+    
+    If IsDate(dob) Then
+        Exit Do
+    Else
+        MsgBox "Invalid Date of Birth!" & vbCrLf & "Please enter in DD-MM-YYYY format.", vbExclamation, "Validation Error"
+    End If
+Loop While True
+
+' 3. Student Name (for display)
+name = InputBox("Enter Student Name:", "Student Result Portal - Step 3/3")
+If name = "" Then name = "Student"
+
+' 4. Subject-wise Marks Input
+total = 0
+For i = 0 To 4
+    Do
+        marksInput = InputBox("Enter marks for " & subjects(i) & " (0-100):", "Marks Entry - " & subjects(i))
+        If marksInput = "" Then WScript.Quit
+
+        If IsNumeric(marksInput) Then
+            marks(i) = CInt(marksInput)
+            If marks(i) >= 0 And marks(i) <= 100 Then
+                Exit Do
+            End If
+        End If
+        MsgBox "Invalid Marks! Enter a number between 0 and 100.", vbExclamation, "Validation Error"
+    Loop While True
+    total = total + marks(i)
 Next
 
+average = total / 5
 
-'----------------------------------------
-' Find Total and Subject Marks
-'----------------------------------------
+' 5. Pass/Fail & Grade Calculation
+status = "PASS"
+For i = 0 To 4
+    If marks(i) < 35 Then
+        status = "FAIL"
+        Exit For
+    End If
+Next
 
-If hasLow And hasHigh Then
-
-    'Mixed digits: 0-4 and 5-9
-    total = 479
-
-    tamil = 96
-    english = 96
-    maths = 96
-    science = 96
-    social = 95
-
-ElseIf hasLow Then
-
-    'Only digits 0-4
-    total = 495
-
-    tamil = 99
-    english = 99
-    maths = 99
-    science = 99
-    social = 99
-
-ElseIf hasHigh Then
-
-    'Only digits 5-9
-    total = 482
-
-    tamil = 97
-    english = 97
-    maths = 96
-    science = 96
-    social = 96
-
+If status = "PASS" Then
+    If average >= 90 Then grade = "A+"
+    If average >= 75 And average < 90 Then grade = "A"
+    If average >= 60 And average < 75 Then grade = "B"
+    If average >= 50 And average < 60 Then grade = "C"
+    If average >= 35 And average < 50 Then grade = "D"
 Else
-
-    MsgBox "Please enter a valid Register Number containing digits 0-9.", _
-           vbExclamation, "Invalid Register Number"
-
-    WScript.Quit
-
+    grade = "E"
+    result = "Fail - Need to reappear"
 End If
 
+If status = "PASS" Then result = "Pass"
 
-'----------------------------------------
-' Pass / Fail
-'----------------------------------------
+' 6. Final Result Display
+Dim finalMsg
+finalMsg = "---------------------------------" & vbCrLf
+finalMsg = finalMsg & "   STUDENT RESULT PORTAL" & vbCrLf
+finalMsg = finalMsg & "---------------------------------" & vbCrLf & vbCrLf
+finalMsg = finalMsg & "Name           : " & name & vbCrLf
+finalMsg = finalMsg & "Register No    : " & regNo & vbCrLf
+finalMsg = finalMsg & "Date of Birth  : " & dob & vbCrLf & vbCrLf
+finalMsg = finalMsg & "---------------------------------" & vbCrLf
+For i = 0 To 4
+    finalMsg = finalMsg & subjects(i) & " : " & marks(i) & "/100" & vbCrLf
+Next
+finalMsg = finalMsg & "---------------------------------" & vbCrLf & vbCrLf
+finalMsg = finalMsg & "Total Marks    : " & total & "/500" & vbCrLf
+finalMsg = finalMsg & "Average        : " & Round(average, 2) & "%" & vbCrLf
+finalMsg = finalMsg & "Grade          : " & grade & vbCrLf
+finalMsg = finalMsg & "Result         : " & status & vbCrLf & vbCrLf
 
-If total >= 250 Then
-    result = "PASS"
+If status = "PASS" Then
+    finalMsg = finalMsg & "Congratulations! You have Passed."
 Else
-    result = "FAIL"
+    finalMsg = finalMsg & "Sorry! You have Failed."
 End If
 
-
-'----------------------------------------
-' Display Result
-'----------------------------------------
-
-MsgBox _
-    "        STUDENT RESULT PORTAL" & vbCrLf & _
-    "----------------------------------------" & vbCrLf & _
-    "Register Number : " & reg & vbCrLf & _
-    "Date of Birth   : " & dob & vbCrLf & _
-    "----------------------------------------" & vbCrLf & _
-    "Tamil           : " & tamil & " / 100" & vbCrLf & _
-    "English         : " & english & " / 100" & vbCrLf & _
-    "Mathematics     : " & maths & " / 100" & vbCrLf & _
-    "Science         : " & science & " / 100" & vbCrLf & _
-    "Social Science  : " & social & " / 100" & vbCrLf & _
-    "----------------------------------------" & vbCrLf & _
-    "TOTAL           : " & total & " / 500" & vbCrLf & _
-    "RESULT          : " & result, _
+MsgBox finalMsg, vbInformation, "Examination Result - " & regNo
     vbInformation, _
     "Examination Result"
